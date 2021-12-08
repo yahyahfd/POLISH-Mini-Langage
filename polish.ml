@@ -79,6 +79,39 @@ let rec pos_ind_string_list_list acc = function
       let no_space_list = remove_spaces_string_list [] string_list in
       pos_ind_string_list_list ((c,indent,no_space_list)::acc) xs;;
 
+let string_to_op x = match x with
+  | "+" -> Add
+  | "-" -> Sub
+  | "*" -> Mul
+  | "/" -> Div
+  | "%" -> Mod
+  | _ -> failwith "Not an op";;
+(** Not working in all cases: need to add aux function that finishes everything by "combining" accs *)
+let string_to_expr x = try Num (int_of_string x) with int_of_string -> Var x;;
+
+(** Cette méthode prend en argument deux accumulateurs faisant office de pile, une liste l d'instructions de type expr et en renvoie une liste d'expr *)
+let rec list_to_expression acc1 acc2 l = match l with
+  | [] ->
+      begin match acc1,acc2 with
+        | [], _ -> acc2
+        | [x],y::y'::ys -> list_to_expression [] (ys@[Op (string_to_op x,y,y')]) l
+        | x::x'::xs,y::ys -> list_to_expression xs (ys@[Op (string_to_op x,string_to_expr x',y)]) l
+
+        | _, _ -> failwith "Wrong Syntax"
+      end
+  | x::xs ->
+      if List.length acc1 > 1 then
+        match acc1 with
+        | y::y'::ys ->
+            if (y'="+" || y'="-" || y'="*" || y'="/" || y'="%")
+            && (y<>"+" && y<>"-" && y<>"*" && y<>"/" && y<>"%") then
+              if (x<>"+" && x<>"-" && x<>"*" && x<>"/" && x<>"%") then
+                list_to_expression ys (acc2@[Op (string_to_op y',string_to_expr y,string_to_expr x)]) xs
+              else list_to_expression (x::acc1) acc2 xs
+            else list_to_expression (x::acc1) acc2 xs
+        | _ -> list_to_expression (x::acc1) acc2 xs
+      else list_to_expression (x::acc1) acc2 xs;;
+
 let read_polish (filename:string) : program = failwith "TODO"
 
 let print_polish (p:program) : unit = failwith "TODO"
