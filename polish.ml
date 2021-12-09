@@ -94,7 +94,12 @@ let string_to_expr x = try Num (int_of_string x) with int_of_string -> Var x;;
 (** Cette méthode retire le premier élément d'une liste si c'est possible, sinon renvoie une exception*)
 let drop_first l = match l with
   | [] -> failwith "Empty List: Cannot Drop first element"
-  | x::xs -> xs
+  | x::xs -> xs;;
+
+(** Cette méthode rajoute l'élément var à la fin de la liste l (fonction récursive terminale) *)
+let rec add_last var l acc = match l with
+  | [] -> List.rev (var::acc)
+  | x::xs -> add_last var xs (x::acc);;
 
 (** Cette méthode prend en argument deux accumulateurs faisant office de pile, une liste l d'instructions de type expr et en renvoie une liste d'expr *)
 let rec list_to_expression_list acc1 acc2 l = match l with
@@ -103,7 +108,7 @@ let rec list_to_expression_list acc1 acc2 l = match l with
         | [], _ -> acc2
         | x::xs, y::ys ->
             begin
-              try list_to_expression_list xs ((drop_first ys)@[Op (string_to_op x,y,(List.nth ys 0))]) l with Failure _ ->
+              try list_to_expression_list xs (add_last (Op (string_to_op x,y,(List.nth ys 0))) (drop_first ys) []) l with Failure _ ->
                 if List.length xs < 1 then failwith "Wrong Syntax"
                 else match xs with
                   | z::zs -> list_to_expression_list zs (ys@[Op (string_to_op z,string_to_expr x,y)]) l
@@ -118,7 +123,7 @@ let rec list_to_expression_list acc1 acc2 l = match l with
             if (y'="+" || y'="-" || y'="*" || y'="/" || y'="%")
             && (y<>"+" && y<>"-" && y<>"*" && y<>"/" && y<>"%") then
               if (x<>"+" && x<>"-" && x<>"*" && x<>"/" && x<>"%") then
-                list_to_expression_list ys (acc2@[Op (string_to_op y',string_to_expr y,string_to_expr x)]) xs
+                list_to_expression_list ys (add_last (Op (string_to_op y',string_to_expr y,string_to_expr x)) acc2 []) xs
               else list_to_expression_list (x::acc1) acc2 xs
             else list_to_expression_list (x::acc1) acc2 xs
         | _ -> list_to_expression_list (x::acc1) acc2 xs
@@ -127,7 +132,7 @@ let rec list_to_expression_list acc1 acc2 l = match l with
 (** Cette méthode permet de transformer le résultat obtenu à travers la précédente en expression au lieu de liste d'expression d'une case *)
 let expr_from_expr_list l = match l with
   | [x] -> x
-  | _ -> failwith "Wrong Syntax"
+  | _ -> failwith "Wrong Syntax";;
 
 let read_polish (filename:string) : program = failwith "TODO"
 
