@@ -79,6 +79,56 @@ let rec pos_ind_string_list_list acc = function
       let no_space_list = remove_spaces_string_list [] string_list in
       pos_ind_string_list_list ((c,indent,no_space_list)::acc) xs;;
 
+(** Cette méthode permet de transformer un opérateur en son type op correspondant sinon renvoie une exception *)
+let string_to_op x = match x with
+  | "+" -> Add
+  | "-" -> Sub
+  | "*" -> Mul
+  | "/" -> Div
+  | "%" -> Mod
+  | _ -> failwith "Not an op";;
+
+(** Cette méthode transforme un String en Num ou Var en fonction de s'il est reconnu ou pas en tant qu'int *)
+let string_to_expr x = try Num (int_of_string x) with int_of_string -> Var x;;
+
+(** Cette méthode retire le premier élément d'une liste si c'est possible, sinon renvoie une exception*)
+let drop_first l = match l with
+  | [] -> failwith "Empty List: Cannot Drop first element"
+  | x::xs -> xs
+
+(** Cette méthode prend en argument deux accumulateurs faisant office de pile, une liste l d'instructions de type expr et en renvoie une liste d'expr *)
+let rec list_to_expression_list acc1 acc2 l = match l with
+  | [] ->
+      begin match acc1, acc2 with
+        | [], _ -> acc2
+        | x::xs, y::ys ->
+            begin
+              try list_to_expression_list xs ((drop_first ys)@[Op (string_to_op x,y,(List.nth ys 0))]) l with Failure _ ->
+                if List.length xs < 1 then failwith "Wrong Syntax"
+                else match xs with
+                  | z::zs -> list_to_expression_list zs (ys@[Op (string_to_op z,string_to_expr x,y)]) l
+                  | _ -> failwith "Wrong Syntax"
+            end
+        | _, _ -> failwith "Wrong Syntax"
+      end
+  | x::xs ->
+      if List.length acc1 > 1 then
+        match acc1 with
+        | y::y'::ys ->
+            if (y'="+" || y'="-" || y'="*" || y'="/" || y'="%")
+            && (y<>"+" && y<>"-" && y<>"*" && y<>"/" && y<>"%") then
+              if (x<>"+" && x<>"-" && x<>"*" && x<>"/" && x<>"%") then
+                list_to_expression_list ys (acc2@[Op (string_to_op y',string_to_expr y,string_to_expr x)]) xs
+              else list_to_expression_list (x::acc1) acc2 xs
+            else list_to_expression_list (x::acc1) acc2 xs
+        | _ -> list_to_expression_list (x::acc1) acc2 xs
+      else list_to_expression_list (x::acc1) acc2 xs;;
+
+(** Cette méthode permet de transformer le résultat obtenu à travers la précédente en expression au lieu de liste d'expression d'une case *)
+let expr_from_expr_list l = match l with
+  | [x] -> x
+  | _ -> failwith "Wrong Syntax"
+
 let read_polish (filename:string) : program = failwith "TODO"
 
 let print_polish (p:program) : unit = failwith "TODO"
