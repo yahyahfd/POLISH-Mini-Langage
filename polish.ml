@@ -74,16 +74,39 @@ let no_space_l l =
         else remove_spaces_string_list (x::acc) xs
   in remove_spaces_string_list [] l;;
 
+(** Cette méthode permet de retirer les commentaires, et ajuste la position des lignes en fonction des changementes *)
+let remove_comments l =
+  let rec rm_com acc i = function
+    | [] -> List.rev acc
+    | (x,y)::xs -> match y with
+      | [] -> failwith "Empty Line"
+      | z::zs ->
+          if z="COMMENT"
+          then rm_com acc (i+1) xs
+          else rm_com (((x-i),y)::acc) i xs
+  in rm_com [] 0 l;;
+
+(** Cette méthode transforme une liste de (postion,string) list en (position,string list) list*)
+let int_string_list_list l =
+  let rec isl_list acc = function
+    | [] -> List.rev acc
+    | (x,y)::xs -> isl_list ((x,(String.split_on_char ' ' y))::acc) xs
+  in isl_list [] l;;
+
 (** Cette méthode renvoie une liste de la forme (postion,indentation,liste_de_mots) afin de faciliter le traitement *)
 let indent_final_list l =
   let rec pos_ind_string_list_list acc = function
     | [] -> List.rev acc
     | (c,x)::xs ->
-        let string_list = (String.split_on_char ' ' x) in
-        let indent = indent_string_l string_list in
-        let no_space_list = no_space_l string_list in
-        pos_ind_string_list_list ((c,indent,no_space_list)::acc) xs
-  in pos_ind_string_list_list [] l;;
+        let indent = indent_string_l x in
+        let no_space_list = no_space_l x in
+        if (indent mod 2 = 0) then
+          (if c=1 then
+             if indent = 0 then pos_ind_string_list_list ((indent,c,no_space_list)::acc) xs
+             else failwith "The first line of the program has to be of indent 0"
+           else pos_ind_string_list_list ((indent,c,no_space_list)::acc) xs)
+        else failwith ("Wrong Indentation at Line "^(string_of_int c)^": Indent has to be an even number")
+  in pos_ind_string_list_list [] (remove_comments (int_string_list_list l));;
 
 (** Cette méthode permet de transformer un opérateur en son type op correspondant sinon renvoie une exception *)
 let string_to_op x = match x with
@@ -181,23 +204,23 @@ let cond_list l : cond =
           list_to_condition_list xs (x::exp1) res
   in cond_from_list (list_to_condition_list l [] []);;
 
-let block_list_from_ind_final_list l =
-  let rec group_indent acc = function
-    | [] -> List.rev acc
-    | (x,y,z)::xs -> if (x mod 2) <> 0 then failwith ("Wrong Indentation at Line "^(string_of_int y)^": Indent has to be an even number") else
-          match acc with
-          | [] -> group_indent [[(x,y,z)]] xs
-          | []::s -> group_indent s xs
-          | ((q,s,d)::ys)::zs ->
-              if x = q then group_indent ((add_last (x,y,z) ((q,s,d)::ys))::zs) xs
-              else group_indent ([(x,y,z)]::acc) xs
-  in let rec remove_indent acc = function
-      | [] -> List.rev acc
-      | ((x,y,z)::xs)-> remove_indent ((y,z)::acc) xs
-  in let rec no_ind_list acc = function
-      | [] -> List.rev acc
-      | x::xs -> no_ind_list ((remove_indent [] x)::acc) xs
-  in no_ind_list [] (group_indent [] l);;
+(*let block_list_from_ind_final_list l =
+   let rec group_indent acc = function
+     | [] -> List.rev acc
+     | (x,y,z)::xs -> if (x mod 2) <> 0 then failwith ("Wrong Indentation at Line "^(string_of_int y)^": Indent has to be an even number") else
+           match acc with
+           | [] -> group_indent [[(x,y,z)]] xs
+           | []::s -> group_indent s xs
+           | ((q,s,d)::ys)::zs ->
+               if x = q then group_indent ((add_last (x,y,z) ((q,s,d)::ys))::zs) xs
+               else group_indent ([(x,y,z)]::acc) xs
+   in let rec remove_indent acc = function
+       | [] -> List.rev acc
+       | ((x,y,z)::xs)-> remove_indent ((y,z)::acc) xs
+   in let rec no_ind_list acc = function
+       | [] -> List.rev acc
+       | x::xs -> no_ind_list ((remove_indent [] x)::acc) xs
+   in no_ind_list [] (group_indent [] l);; *)
 
 let mk_instr l =
   let rec instr_u acc = function
@@ -205,9 +228,19 @@ let mk_instr l =
         | r::rs -> (match r with
             | "READ" ->
                 if (List.length rs = 1)
-                then instr_u (add_last (y,(Read (List.nth rs 0))) acc) xs
+                then
+                  match xs with
+                  | [] -> instr_u (add_last (y,(Read (List.nth rs 0))) acc) xs
+                  | (x',y',z')::xs' ->
+                      if x<>x' then failwith ("Wrong Syntax at line "^(string_of_int y')^": Read can only be followed by an instruction with same indent (unless inside an if, else or while loop)")
+                      else instr_u (add_last (y,(Read (List.nth rs 0))) acc) xs
                 else failwith "Wrong Syntax: Read expects a single argument"
-            | "PRINT" -> instr_u (add_last (y,(Print (expr_from_list rs))) acc) xs
+            | "PRINT" ->
+                (match xs with
+                 | [] -> instr_u (add_last (y,(Print (expr_from_list rs))) acc) xs
+                 | (x',y',z')::xs' ->
+                     if x<>x' then failwith ("Wrong Syntax at line "^(string_of_int y')^": Print can only be followed by an instruction with same indent (unless inside an if, else or while loop)")
+                     else instr_u (add_last (y,(Print (expr_from_list rs))) acc) xs)
             | "WHILE" ->
                 if List.length rs > 0 then
                   let rec find_block n acc' = function
@@ -239,7 +272,12 @@ let mk_instr l =
             | _ -> (if (List.length rs > 1  && (List.nth rs 0) = ":=")
                     then
                       match string_to_expr r with
-                      | Var _ -> instr_u (add_last (y,(Set (r,(expr_from_list (drop_first rs))))) acc) xs
+                      | Var _ ->
+                          (match xs with
+                           | [] -> instr_u (add_last (y,(Set (r,(expr_from_list (drop_first rs))))) acc) xs
+                           | (x',y',z')::xs' ->
+                               if x<>x' then failwith ("Wrong Syntax at line "^(string_of_int y')^": Set can only be followed by an instruction with same indent (unless inside an if, else or while loop)")
+                               else instr_u (add_last (y,(Set (r,(expr_from_list (drop_first rs))))) acc) xs)
                       | _ -> failwith "You can only set a variable"
                     else failwith "Wrong Syntax: Pattern not matched"))
         | [] -> instr_u acc xs)
@@ -253,10 +291,18 @@ let test_b =
 let test_c =
   [(0,1,["READ";"N"]);(0,2,["N";":=";"0"]);(0,3,["WHILE";"N";"<";"3"]);(2,4,["N";":=";"+";"N";"1"]);(0,5,["PRINT";"N"])];;
 let test_d =
-  [(0,1,["READ";"N"]);(4,2,["N";":=";"0"])]
+  [(0,1,["READ";"N"]);(2,2,["N";":=";"0"])]
+let test_e = (*Will never happen*)
+  [(0,1,["READ";"N"]);(1,2,["N";":=";"0"])]
+let test_f = (*Will never happen*)
+  [(2,1,["READ";"N"]);(0,2,["N";":=";"0"])]
+let test_g =
+  [(1,"COMMENT valeur absolue");(2,"READ n");(3,"IF n < 0");(4,"  res := - 0 n");(5,"ELSE");(6,"  res := n");(7,"PRINT res")]
 
-
-let read_polish (filename:string) : program = failwith "TODO"
+let read_polish (filename:string) : program =
+  let file = file_to_pos_string_list filename in
+  let indented_version = indent_final_list file in
+  mk_instr indented_version;;
 
 let print_polish (p:program) : unit = failwith "TODO"
 
