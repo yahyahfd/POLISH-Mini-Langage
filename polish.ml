@@ -158,6 +158,7 @@ let expr_from_list l =
               else list_to_expression_list (x::acc1) acc2 xs)
   in expr_from_expr_list (list_to_expression_list [] [] l);;
 
+(** Cette méthode transforme un comparator en sa valeur correspondante *)
 let string_to_comp x = match x with
   | "=" -> Eq
   | "<>" -> Ne
@@ -167,10 +168,11 @@ let string_to_comp x = match x with
   | ">=" -> Ge
   | _ -> failwith "Not a comp";;
 
+(** Cette méthode transforme une string list en condition *)
 let cond_list l : cond =
   let cond_from_list = function
     | [x] -> x
-    | _ -> failwith "Wrong Syntax: Expected a single element inside a list" in
+    | _ -> failwith "Wrong Syntax: Expected a single element inside this list" in
   let rec list_to_condition_list l exp1 res = match (no_space_l l) with
     | [] -> res
     | x::xs ->
@@ -179,38 +181,80 @@ let cond_list l : cond =
           list_to_condition_list xs (x::exp1) res
   in cond_from_list (list_to_condition_list l [] []);;
 
-let line_to_instr l = match l with
-  | [] -> failwith "Wrong Syntax"
-  | x::xs -> match x with
-    | "READ" -> if (List.length xs = 1) then Read (List.nth xs 0) else failwith "Wrong Syntax"
-    | "PRINT" -> Print (expr_from_list xs)
-    | "WHILE" -> failwith "todo:while" (*on appelle la fnct suivante*)
-    | "IF" -> failwith "todo:if"
-    | _ -> failwith "nah"
-  (*  | _ -> if (List.length xs > 1) && ((List.nth xs 0) = ":=" ) then (*Set*) failwith "todo:set" else failwith "Wrong Syntax"
-and instr_to_block l acc i : block = match l with
-  | [] -> List.rev acc
-  | x::xs -> instr_to_block xs ((i,line_to_instr xs)::acc) (i+1);;
-Il faut correctement détecter un si c'est un block ou pas, via l'indentation, puis d'autres règles*)
-
 let block_list_from_ind_final_list l =
   let rec group_indent acc = function
-      | [] -> List.rev acc
-      | (x,y,z)::xs -> if (x mod 2) <> 0 then failwith "Wrong Syntax" else
+    | [] -> List.rev acc
+    | (x,y,z)::xs -> if (x mod 2) <> 0 then failwith ("Wrong Indentation at Line "^(string_of_int y)^": Indent has to be an even number") else
           match acc with
           | [] -> group_indent [[(x,y,z)]] xs
+          | []::s -> group_indent s xs
           | ((q,s,d)::ys)::zs ->
-              if x = q then group_indent (((x,y,z)::(q,s,d)::ys)::zs) xs
+              if x = q then group_indent ((add_last (x,y,z) ((q,s,d)::ys))::zs) xs
               else group_indent ([(x,y,z)]::acc) xs
-          | _ -> failwith "Impossible"
   in let rec remove_indent acc = function
       | [] -> List.rev acc
-      | ((x,y,z)::zs)::xs -> remove_indent ((y,z)::acc) xs
-      | _ -> failwith "todo"
-  in remove_indent [] (group_indent [] l)
+      | ((x,y,z)::xs)-> remove_indent ((y,z)::acc) xs
+  in let rec no_ind_list acc = function
+      | [] -> List.rev acc
+      | x::xs -> no_ind_list ((remove_indent [] x)::acc) xs
+  in no_ind_list [] (group_indent [] l);;
 
-let test_ind_pos_stringl_list : (int*position*string list) list =
+let mk_instr l =
+  let rec instr_u acc = function
+    | (x,y,z)::xs -> (match z with
+        | r::rs -> (match r with
+            | "READ" ->
+                if (List.length rs = 1)
+                then instr_u (add_last (y,(Read (List.nth rs 0))) acc) xs
+                else failwith "Wrong Syntax: Read expects a single argument"
+            | "PRINT" -> instr_u (add_last (y,(Print (expr_from_list rs))) acc) xs
+            | "WHILE" ->
+                if List.length rs > 0 then
+                  let rec find_block n acc' = function
+                    | [] -> instr_u (add_last (y,(While(cond_list rs,(instr_u [] acc')))) acc) []
+                    | (x',y',z')::xs' ->
+                        if (x'> n) then find_block n (add_last (x',y',z') acc') xs'
+                        else instr_u (add_last (y,(While(cond_list rs,(instr_u [] acc')))) acc) ((x',y',z')::xs')
+                  in find_block x [] xs
+                else failwith "Wrong Syntax: While expects arguments"
+            | "IF" ->
+                if List.length rs > 0 then
+                  let rec find_if_block n acc' = function
+                    | [] -> instr_u (add_last (y,(If(cond_list rs,(instr_u [] acc'),[]))) acc) []
+                    | (x',y',z')::xs' ->
+                        if (x'> n) then find_if_block n (add_last (x',y',z') acc') xs'
+                        else
+                          (if x'=n then
+                             (if List.nth z' 0 = "ELSE" then
+                                let rec find_else_block n' acc'' = function
+                                  | [] -> instr_u (add_last (y,If(cond_list rs,(instr_u [] acc'),(instr_u [] acc''))) acc) []
+                                  | (x'',y'',z'')::xs'' ->
+                                      if(x''> n') then find_else_block n' (add_last (x'',y'',z'') acc'') xs''
+                                      else instr_u (add_last (y,If(cond_list rs,(instr_u [] acc'),(instr_u [] acc''))) acc) ((x'',y'',z'')::xs'')
+                                in find_else_block x' [] xs'
+                              else instr_u (add_last (y,If(cond_list rs,(instr_u [] acc'),[])) acc) ((x',y',z')::xs'))
+                           else instr_u (add_last (y,If(cond_list rs,(instr_u [] acc'),[])) acc) ((x',y',z')::xs'))
+                  in find_if_block x [] xs
+                else failwith "Wrong Syntax: If expects arguments"
+            | _ -> (if (List.length rs > 1  && (List.nth rs 0) = ":=")
+                    then
+                      match string_to_expr r with
+                      | Var _ -> instr_u (add_last (y,(Set (r,(expr_from_list (drop_first rs))))) acc) xs
+                      | _ -> failwith "You can only set a variable"
+                    else failwith "Wrong Syntax: Pattern not matched"))
+        | [] -> instr_u acc xs)
+    | [] -> acc
+  in instr_u [] l;;
+
+let test_a =
   [(0,1,["READ";"N"]);(0,2,["IF";"N";"=";"0"]);(2,3,["N";":=";"1"]);(0,4,["ELSE"]);(2,5,["N";":=";"2"])];;
+let test_b =
+  [(0,1,["READ";"N"]);(0,2,["N";":=";"0"]);(0,3,["PRINT";"N"])];;
+let test_c =
+  [(0,1,["READ";"N"]);(0,2,["N";":=";"0"]);(0,3,["WHILE";"N";"<";"3"]);(2,4,["N";":=";"+";"N";"1"]);(0,5,["PRINT";"N"])];;
+let test_d =
+  [(0,1,["READ";"N"]);(4,2,["N";":=";"0"])]
+
 
 let read_polish (filename:string) : program = failwith "TODO"
 
