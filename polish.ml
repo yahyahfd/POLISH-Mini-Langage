@@ -206,21 +206,21 @@ let cond_list l : cond =
 
 (*let block_list_from_ind_final_list l =
    let rec group_indent acc = function
-     | [] -> List.rev acc
-     | (x,y,z)::xs -> if (x mod 2) <> 0 then failwith ("Wrong Indentation at Line "^(string_of_int y)^": Indent has to be an even number") else
-           match acc with
-           | [] -> group_indent [[(x,y,z)]] xs
-           | []::s -> group_indent s xs
-           | ((q,s,d)::ys)::zs ->
-               if x = q then group_indent ((add_last (x,y,z) ((q,s,d)::ys))::zs) xs
-               else group_indent ([(x,y,z)]::acc) xs
-   in let rec remove_indent acc = function
-       | [] -> List.rev acc
-       | ((x,y,z)::xs)-> remove_indent ((y,z)::acc) xs
-   in let rec no_ind_list acc = function
-       | [] -> List.rev acc
-       | x::xs -> no_ind_list ((remove_indent [] x)::acc) xs
-   in no_ind_list [] (group_indent [] l);; *)
+| [] -> List.rev acc
+| (x,y,z)::xs -> if (x mod 2) <> 0 then failwith ("Wrong Indentation at Line "^(string_of_int y)^": Indent has to be an even number") else
+    match acc with
+    | [] -> group_indent [[(x,y,z)]] xs
+    | []::s -> group_indent s xs
+    | ((q,s,d)::ys)::zs ->
+        if x = q then group_indent ((add_last (x,y,z) ((q,s,d)::ys))::zs) xs
+        else group_indent ([(x,y,z)]::acc) xs
+in let rec remove_indent acc = function
+    | [] -> List.rev acc
+    | ((x,y,z)::xs)-> remove_indent ((y,z)::acc) xs
+in let rec no_ind_list acc = function
+    | [] -> List.rev acc
+    | x::xs -> no_ind_list ((remove_indent [] x)::acc) xs
+in no_ind_list [] (group_indent [] l);; *)
 
 let mk_instr l =
   let rec instr_u acc = function
@@ -290,7 +290,7 @@ let test_b =
   [(0,1,["READ";"N"]);(0,2,["N";":=";"0"]);(0,3,["PRINT";"N"])];;
 let test_c =
   [(0,1,["READ";"N"]);(0,2,["N";":=";"0"]);(0,3,["WHILE";"N";"<";"3"]);(2,4,["N";":=";"+";"N";"1"]);(0,5,["PRINT";"N"])];;
-let test_d =
+let test_d = (*Will never happen*)
   [(0,1,["READ";"N"]);(2,2,["N";":=";"0"])]
 let test_e = (*Will never happen*)
   [(0,1,["READ";"N"]);(1,2,["N";":=";"0"])]
@@ -298,11 +298,64 @@ let test_f = (*Will never happen*)
   [(2,1,["READ";"N"]);(0,2,["N";":=";"0"])]
 let test_g =
   [(1,"COMMENT valeur absolue");(2,"READ n");(3,"IF n < 0");(4,"  res := - 0 n");(5,"ELSE");(6,"  res := n");(7,"PRINT res")]
+let test_h =
+  [(0,1,["READ";"N"]);(0,2,["IF";"N";"=";"0"]);(2,3,["N";":=";"1"])];;
 
 let read_polish (filename:string) : program =
   let file = file_to_pos_string_list filename in
   let indented_version = indent_final_list file in
   mk_instr indented_version;;
+
+(** Cette méthode permet de passer d'une expression à un string list correspondant *)
+let expr_string_list p =
+  let op_to_string = function
+    | Add -> "+"
+    | Sub -> "-"
+    | Mul -> "*"
+    | Div -> "/"
+    | Mod -> "%"
+  in let rec expr_to_string acc = function
+      | Op (a,b,c) -> (expr_to_string (expr_to_string ((op_to_string a)::acc) b) c)
+      | Var a -> (a::acc)
+      | Num a -> ((string_of_int a)::acc)
+  in List.rev (expr_to_string [] p);;
+
+(** Cette méthode concatène en deux liste *)
+let cat_list l1 l2 =
+  let rec concat_list acc l = function
+    | [] -> (match l with
+        | [] -> List.rev acc
+        | _ -> concat_list acc [] l
+      )
+    | x::xs -> concat_list (x::acc) l xs
+  in concat_list [] l2 l1;;
+
+(** Cette méthode transforme une condition p en un string list correspondant*)
+let cond_string_list p =
+  let comp_to_string = function
+    | Eq -> "="
+    | Ne -> "<>"
+    | Lt -> "<"
+    | Le -> "<="
+    | Gt -> ">"
+    | Ge -> ">="
+  in let cond_to_string = function
+      | (a,b,c) -> cat_list (add_last (comp_to_string b) (expr_string_list a)) (expr_string_list c)
+  in cond_to_string p;;
+
+(** Cette méthode transforme un block en (indentation,position,string list) list*)
+let block_to_instr_list l =
+  let rec count_ind acc i = function
+    | [] -> acc
+    | (x,y)::xs -> match y with
+      | Read r -> count_ind ((i,x,["READ";r])::acc) i xs
+      | Print r -> count_ind ((i,x,("PRINT"::(expr_string_list r)))::acc) i xs
+      | If (a,b,c) -> (match c with
+          | [] -> count_ind (cat_list (count_ind [(i,x,("IF"::cond_string_list a))] (i+2) b) acc) i xs
+          | (line,ins)::_ -> count_ind (cat_list (count_ind [(i,(line-1),["ELSE"])] (i+2) c) (cat_list (count_ind [(i,x,("IF"::cond_string_list a))] (i+2) b) acc)) i xs)
+      | While (a,b) -> count_ind (cat_list (count_ind [(i,x,("WHILE"::cond_string_list a))] (i+2) b) acc) i xs
+      | Set (a,b) -> count_ind ((i,x,(a::":="::(expr_string_list b)))::acc) i xs
+  in List.rev (count_ind [] 0 l);;
 
 let print_polish (p:program) : unit = failwith "TODO"
 
