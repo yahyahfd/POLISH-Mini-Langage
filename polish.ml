@@ -300,6 +300,8 @@ let test_g =
   [(1,"COMMENT valeur absolue");(2,"READ n");(3,"IF n < 0");(4,"  res := - 0 n");(5,"ELSE");(6,"  res := n");(7,"PRINT res")]
 let test_h =
   [(0,1,["READ";"N"]);(0,2,["IF";"N";"=";"0"]);(2,3,["N";":=";"1"])];;
+let test_i = (*Will never happen*)
+  [(0,1,["READ";"N"]);(0,3,["IF";"N";"=";"0"]);(2,4,["N";":=";"1"])];;
 
 let read_polish (filename:string) : program =
   let file = file_to_pos_string_list filename in
@@ -357,7 +359,30 @@ let block_to_instr_list l =
       | Set (a,b) -> count_ind ((i,x,(a::":="::(expr_string_list b)))::acc) i xs
   in List.rev (count_ind [] 0 l);;
 
-let print_polish (p:program) : unit = failwith "TODO"
+(** Cette méthode permet de passer d'une (indent,position,stringlist) list à une string list*)
+let ipsl_list_to_string l =
+  let rec remove_pos acc = function
+    | [] -> List.rev acc
+    | (a,b,c)::ac -> remove_pos ((a,c)::acc) ac
+  in let rec add_indent s = function
+      | 0 -> s
+      | i -> add_indent (" "^s) (i-1)
+  in let rec res_list acc = function
+      | [] -> List.rev acc
+      | (x,y)::xs -> res_list ((add_indent (String.concat " " y) x)::acc) xs
+  in res_list [] (remove_pos [] l);;
+
+let string_list_to_string l =
+  let rec aux acc = function
+    | [] -> acc
+    | x::xs -> aux (acc^x^"\n") xs
+  in aux "" l;;
+
+let print_polish (p:program) : unit =
+  let ipsl_list = block_to_instr_list p
+  in let s_list = ipsl_list_to_string ipsl_list
+  in let final_string = string_list_to_string s_list
+  in print_string final_string;;
 
 let eval_polish (p:program) : unit = failwith "TODO"
 
