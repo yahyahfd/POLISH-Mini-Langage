@@ -31,6 +31,8 @@ J'ai découpé le projet en différent module (.ml) accompagnés de leurs interf
 - read: Nous permet de lire un fichier polish et de le retranscrire en code ocaml. J'ai caché toutes les méthodes intermédiaires via l'interface correspondante. Ce module est utilisé dans la méthode `read_polish` du main.
 - print: Nous permet d'imprimer du polish obtenu à partir de code ocaml. J'ai également caché toutes les méthodes intermédiaires via l'interface correspondante. Ce module est utilisé dans la méthode `print_polish` du main.
 - evaluation: Comme son nom l'indique, ce module permet d'évaluer un type program et d'afficher le résultat qu'on celà est demandé. J'ai également caché toutes les méthodes intermédiaires via l'interface correspondante. Ce module est utilisé dans la méthode `eval_polish` du main.
+- types: J'ai déplacé tout les types spécifiés au départ dans `polish.ml` dans une nouveau module à part afin qu'il servent aussi aux nouveaux modules.
+- polish: J'ai rajouté un polish.mli qui n'affiche que le main.
 
 ## Organisation du travail
 Je suis l'unique membre de mon groupe et donc j'ai fais le projet en entier tout seul. Le projet fut annoncé lors de la deuxième semaine du mois de novembre. J'ai donc lu le sujet pour la première fois deux semaines après afin de définir un ensemble de tâches au brouillon, bien avant de les rajouter sur le git. Je penses qu'il n'y aurait eu aucun intérêt à rajouter les tâches directement vu que je n'ai pas de binôme avec qui en discuter. J'avais tout le projet en tête vers fin novembre, mais je n'ai pu commencer à réellement le programmer qu'une semaine avant la date limite du premier rendu à cause d'autres projets que je devait rendre avant (langage C).
