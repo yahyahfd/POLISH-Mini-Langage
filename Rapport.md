@@ -1,11 +1,11 @@
-##Identifiants
+## Identifiants
 
 **Nom:** Hafid
 **Prénom:** Yahya
 **Numéro étudiant:** 71800578
-**Pseudo Gitlab** hafid
+**Pseudo Gitlab:** hafid
 
-##Fonctionnalités
+## Fonctionnalités
 J'ai fais ce qui a été demandé pour le premier rendu, c'est-à-dire:
 - gérer la traduction de fichiers polish en syntaxe abstraite (polish -> ocaml)
 - le ré-affichage en syntaxe concrète polish de ce code (ocaml -> polish)
@@ -17,7 +17,7 @@ Lors de l'évaluation, je me suis permis de définir une variable de type (strin
 
 Concernant le résultat de l'évaluation de polish, ça ne marche bien évidemment pas pour des nombres enormes, car je n'ai pas utilisé la bibliothèque ZArith.
 
-##Compilation et exécution
+## Compilation et exécution
 Pour compiler le projet, il suffit d'utiliser la commande `make` à la racine du dépot, puis d'utiliser les commandes suivantes afin de l'executer:
 - ./run -eval <Chemin du fichier polish: dans le dossier "exemples" dans notre cas>
 - ./run -reprint <Chemin du fichier polish>
@@ -34,6 +34,6 @@ J'ai découpé le projet en différent module (.ml) accompagnés de leurs interf
 ## Organisation du travail
 Je suis l'unique membre de mon groupe et donc j'ai fais le projet en entier tout seul. Le projet fut annoncé lors de la deuxième semaine du mois de novembre. J'ai donc lu le sujet pour la première fois deux semaines après afin de définir un ensemble de tâches au brouillon, bien avant de les rajouter sur le git. Je penses qu'il n'y aurait eu aucun intérêt à rajouter les tâches directement vu que je n'ai pas de binôme avec qui en discuter. J'avais tout le projet en tête vers fin novembre, mais je n'ai pu commencer à réellement programmer le projet qu'une semaine avant la date limite du premier rendu à cause d'autres projets que je devait rendre avant (langage C).
 
-##Misc
+## Misc
 Aucune remarque par rapport au sujet en lui-même mais j'ai tout de même une remarque par rapport à une des restrictions données:
 - Il est écrit au 6ème point des critères d'évaluations données dans le fichier `CONSIGNES.md` qu'il vaudrait mieux éviter l'utilisation d'impératif, mais je ne vois pas du tout comment on pourrait faire pour l'environnement lors de l'évaluation sans un ref.
