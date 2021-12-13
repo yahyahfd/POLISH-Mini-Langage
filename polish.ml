@@ -19,7 +19,7 @@ let print_polish (p:program) : unit =
   in let final_string = Print.string_list_to_string s_list
   in print_string final_string;;
 
-let eval_polish (p:program) : unit = failwith "TODO"
+let eval_polish (p:program) : unit = Evaluation.evaluate p;;
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
