@@ -5,55 +5,21 @@
     projet en plusieurs fichiers source de tailles raisonnables *)
 
 (*****************************************************************************)
-(** Syntaxe abstraite Polish (types imposés, ne pas changer sauf extensions) *)
-
-(** Position : numéro de ligne dans le fichier, débutant à 1 *)
-type position = int
-
-(** Nom de variable *)
-type name = string
-
-(** Opérateurs arithmétiques : + - * / % *)
-type op = Add | Sub | Mul | Div | Mod
-
-(** Expressions arithmétiques *)
-type expr =
-  | Num of int
-  | Var of name
-  | Op of op * expr * expr
-
-(** Opérateurs de comparaisons *)
-type comp =
-| Eq (* = *)
-| Ne (* Not equal, <> *)
-| Lt (* Less than, < *)
-| Le (* Less or equal, <= *)
-| Gt (* Greater than, > *)
-| Ge (* Greater or equal, >= *)
-
-(** Condition : comparaison entre deux expressions *)
-type cond = expr * comp * expr
-
-(** Instructions *)
-type instr =
-  | Set of name * expr
-  | Read of name
-  | Print of expr
-  | If of cond * block * block
-  | While of cond * block
-and block = (position * instr) list
-
-(** Un programme Polish est un bloc d'instructions *)
-type program = block
-
+open Types
 
 (***********************************************************************)
+let read_polish (filename:string) : program =
+  let file = Read.file_to_pos_string_list filename in
+  let indented_version = Read.indent_final_list file in
+  Read.mk_instr indented_version;;
 
-let read_polish (filename:string) : program = failwith "TODO"
+let print_polish (p:program) : unit =
+  let ipsl_list = Print.block_to_instr_list p
+  in let s_list = Print.ipsl_list_to_string ipsl_list
+  in let final_string = Print.string_list_to_string s_list
+  in print_string final_string;;
 
-let print_polish (p:program) : unit = failwith "TODO"
-
-let eval_polish (p:program) : unit = failwith "TODO"
+let eval_polish (p:program) : unit = Evaluation.evaluate p;;
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
