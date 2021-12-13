@@ -240,7 +240,8 @@ let mk_instr l =
                                                          (instr_u [] acc'))))
                                         acc) ((x',y',z')::xs')
                   in find_block x [] xs
-                else failwith "Wrong Syntax: While expects arguments"
+                else failwith ("Wrong Syntax at line "^(string_of_int y)^
+                              ": While expects arguments")
             | "IF" ->
                 if List.length rs > 0 then
                   let rec find_if_block n acc' = function
@@ -276,7 +277,8 @@ let mk_instr l =
                                                         (instr_u [] acc'),[]))
                                            acc) ((x',y',z')::xs'))
                   in find_if_block x [] xs
-                else failwith "Wrong Syntax: If expects arguments"
+                else failwith ("Wrong Syntax at line "^(string_of_int y)^
+                              ": If expects arguments")
             | _ -> (if (List.length rs > 1  && (List.nth rs 0) = ":=")
                     then
                       match string_to_expr r with
@@ -301,8 +303,11 @@ let mk_instr l =
                                                         (expr_from_list
                                                            (drop_first rs)))))
                                                acc) xs)
-                      | _ -> failwith "You can only set a variable"
-                    else failwith "Wrong Syntax: Pattern not matched"))
+                      | _ -> failwith ("Wrong Syntax at line "^
+                                      (string_of_int y)^
+                                      ": You can only set a variable")
+                    else failwith ("Wrong Syntax at line "^(string_of_int y)^
+                                  ": Pattern not matched")))
         | [] -> instr_u acc xs)
     | [] -> acc
   in instr_u [] l;;
