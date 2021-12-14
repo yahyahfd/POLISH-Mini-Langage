@@ -23,7 +23,9 @@ let eval_polish (p:program) : unit = Evaluation.evaluate p;;
 
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
-  print_string "usage: à documenter (TODO)\n"
+  print_string ("usage:\n./run -eval <filepath> to evaluate a polish file\n./r"^
+               "un -reprint <filepath> to print a program with a polish syntax"^
+               "\n")
 
 let main () =
   match Sys.argv with
