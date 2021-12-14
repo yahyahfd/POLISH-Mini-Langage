@@ -1,5 +1,8 @@
 open Types
 
+(** J'ai créé une nouvelle exception Problem qui prend un string *)
+exception Problem of string;;
+
 (** Cette méthode rajoute l'élément x à la fin de la liste l *)
 let add_last x l =
   let rec add_last_list var l acc = match l with
@@ -40,7 +43,7 @@ let remove_comments l =
   let rec rm_com acc i = function
     | [] -> List.rev acc
     | (x,y)::xs -> match y with
-      | [] -> failwith "Empty Line"
+      | [] -> raise (Problem "Empty Line")
       | z::zs ->
           if z="COMMENT"
           then rm_com acc (i+1) xs
@@ -67,10 +70,11 @@ let indent_final_list l =
           (if c=1 then
              if indent = 0 then pos_ind_string_list_list
                  ((indent,c,no_space_list)::acc) xs
-             else failwith "The first line of the program has to be of indent 0"
+             else raise (Problem ("The first line of the program has to be "^
+                         "of indent 0"))
            else pos_ind_string_list_list ((indent,c,no_space_list)::acc) xs)
-        else failwith ("Wrong Indentation at Line "^(string_of_int c)^
-                       ": Indent has to be an even number")
+        else raise (Problem ("Wrong Indentation at Line "^(string_of_int c)^
+                             ": Indent has to be an even number"))
   in pos_ind_string_list_list [] (remove_comments (int_string_list_list l));;
 
 (** Cette méthode permet de transformer un opérateur en son type op
@@ -81,21 +85,21 @@ let string_to_op x = match x with
   | "*" -> Mul
   | "/" -> Div
   | "%" -> Mod
-  | _ -> failwith "Not an op";;
+  | _ -> raise (Problem "Not an op");;
 
 (** Cette méthode transforme un String en Num ou Var en fonction de s'il est
     reconnu ou pas en tant qu'int. Renvoie une exception si x est un op *)
 let string_to_expr x = match x with
-  | "+" | "-" | "*" | "/" | "%" -> failwith "This is an op"
+  | "+" | "-" | "*" | "/" | "%" -> raise (Problem "This is an op")
   | _ ->
       try Num (int_of_string x)
       with int_of_string ->
-        if x="" then failwith "Empty Var" else Var x;;
+        if x="" then raise (Problem "Empty Var") else Var x;;
 
 (** Cette méthode retire le premier élément d'une liste si c'est possible,
     sinon renvoie une exception*)
 let drop_first l = match l with
-  | [] -> failwith "Empty List: Cannot Drop first element"
+  | [] -> raise (Problem "Empty List: Cannot Drop first element")
   | x::xs -> xs;;
 
 (** Cette méthode prend en argument deux accumulateurs faisant office de pile,
@@ -104,7 +108,8 @@ let drop_first l = match l with
 let expr_from_list l =
   let expr_from_expr_list = function
     | [x] -> x
-    | _ -> failwith "Wrong Syntax: Expected a single element in this list" in
+    | _ -> raise (Problem ("Wrong Syntax: Expected a single element in "^
+                          "this list")) in
   let rec list_to_expression_list acc1 acc2 l = match (no_space_l l) with
     | [] -> (match acc1, acc2 with
         | [x], [] -> [string_to_expr x]
@@ -112,16 +117,16 @@ let expr_from_list l =
         | x::x'::xs, y::ys ->
             (try list_to_expression_list xs
                    (add_last (Op (string_to_op x',string_to_expr x,y)) ys) l
-             with _ -> failwith "Wrong Syntax: The formula is wrong")
-        | _, [] -> failwith
+             with _ -> raise (Problem "Wrong Syntax: The formula is wrong"))
+        | _, [] -> raise (Problem
                      ("Wrong Syntax: There are no operations left (acc2 and "^
-                      "l empty) and acc1 contains more than 1 element")
-        | [],_ -> failwith
+                      "l empty) and acc1 contains more than 1 element"))
+        | [],_ -> raise (Problem
                     ("Wrong Syntax: There is more than 1 operation left (acc2)"^
-                     " but no more operators to calculate (acc1 and l empty)")
-        | _, _ -> failwith
-                    ("Wrong Syntax: Since both accumulators aren't matching"^
-                     "proper results, the whole operation had a wrong syntax"))
+                     " but no more operators to calculate (acc1 and l empty)"))
+        | _, _ -> raise (Problem
+                    ("Wrong Syntax: Since both accumulators aren't matching "^
+                     "proper results, the whole operation had a wrong syntax")))
     | x::xs ->
         if List.length acc1 > 1 then
           match acc1 with
@@ -165,7 +170,7 @@ let expr_from_list l =
               then
                 try [Op (string_to_op (List.nth acc1 0),(List.nth acc2 0),
                          string_to_expr (List.nth l 0))]
-                with _ -> failwith "Wrong Syntax: The formula is wrong"
+                with _ -> raise (Problem "Wrong Syntax: The formula is wrong")
               else list_to_expression_list (x::acc1) acc2 xs)
   in expr_from_expr_list (list_to_expression_list [] [] l);;
 
@@ -177,13 +182,14 @@ let string_to_comp x = match x with
   | "<=" -> Le
   | ">" -> Gt
   | ">=" -> Ge
-  | _ -> failwith "Not a comp";;
+  | _ -> raise (Problem "Not a comp");;
 
 (** Cette méthode transforme une string list en condition *)
 let cond_list l : cond =
   let cond_from_list = function
     | [x] -> x
-    | _ -> failwith "Wrong Syntax: Expected a single element in this list" in
+    | _ -> raise (Problem ("Wrong Syntax: Expected a single element in this "^
+                          "list")) in
   let rec list_to_condition_list l exp1 res = match (no_space_l l) with
     | [] -> res
     | x::xs ->
@@ -191,7 +197,7 @@ let cond_list l : cond =
               [(expr_from_list (List.rev exp1),
                 (string_to_comp x),
                 expr_from_list xs)]
-        with Failure _ ->
+        with Problem _ ->
           list_to_condition_list xs (x::exp1) res
   in cond_from_list (list_to_condition_list l [] []);;
 
@@ -208,12 +214,14 @@ let mk_instr l =
                   | (x',y',z')::xs' ->
                       if x<>x'
                       then
-                        failwith ("Wrong Syntax at line "^(string_of_int y')^
+                        raise (Problem ("Wrong Syntax at line "^
+                                        (string_of_int y')^
                                   ": Read can only be followed by an "^
                                   "instruction with same indent (unless inside"^
-                                  " an if, else or while loop)")
+                                  " an if, else or while loop)"))
                       else instr_u (add_last (y,(Read (List.nth rs 0))) acc) xs
-                else failwith "Wrong Syntax: Read expects a single argument"
+                else raise (Problem ("Wrong Syntax: Read expects a single "^
+                                    "argument"))
             | "PRINT" ->
                 (match xs with
                  | [] -> instr_u (add_last (y,(Print (expr_from_list rs)))
@@ -221,10 +229,11 @@ let mk_instr l =
                  | (x',y',z')::xs' ->
                      if x<>x'
                      then
-                       failwith ("Wrong Syntax at line "^(string_of_int y')^
+                       raise (Problem ("Wrong Syntax at line "^
+                                      (string_of_int y')^
                                  ": Print can only be followed by an "^
                                  "instruction with same indent (unless inside "^
-                                 "an if, else or while loop)")
+                                 "an if, else or while loop)"))
                      else instr_u (add_last (y,(Print (expr_from_list rs)))
                                      acc) xs)
             | "WHILE" ->
@@ -240,8 +249,8 @@ let mk_instr l =
                                                          (instr_u [] acc'))))
                                         acc) ((x',y',z')::xs')
                   in find_block x [] xs
-                else failwith ("Wrong Syntax at line "^(string_of_int y)^
-                              ": While expects arguments")
+                else raise (Problem ("Wrong Syntax at line "^(string_of_int y)^
+                              ": While expects arguments"))
             | "IF" ->
                 if List.length rs > 0 then
                   let rec find_if_block n acc' = function
@@ -277,8 +286,8 @@ let mk_instr l =
                                                         (instr_u [] acc'),[]))
                                            acc) ((x',y',z')::xs'))
                   in find_if_block x [] xs
-                else failwith ("Wrong Syntax at line "^(string_of_int y)^
-                              ": If expects arguments")
+                else raise (Problem ("Wrong Syntax at line "^(string_of_int y)^
+                              ": If expects arguments"))
             | _ -> (if (List.length rs > 1  && (List.nth rs 0) = ":=")
                     then
                       match string_to_expr r with
@@ -293,21 +302,22 @@ let mk_instr l =
                            | (x',y',z')::xs' ->
                                if x<>x'
                                then
-                                 failwith ("Wrong Syntax at line "^
+                                 raise (Problem ("Wrong Syntax at line "^
                                            (string_of_int y')^": Set can only "^
                                            "be followed by an instruction with"^
                                            " same indent (unless inside an if,"^
-                                           " else or while loop)")
+                                           " else or while loop)"))
                                else instr_u (add_last
                                                (y,(Set (r,
                                                         (expr_from_list
                                                            (drop_first rs)))))
                                                acc) xs)
-                      | _ -> failwith ("Wrong Syntax at line "^
+                      | _ -> raise (Problem ("Wrong Syntax at line "^
                                       (string_of_int y)^
-                                      ": You can only set a variable")
-                    else failwith ("Wrong Syntax at line "^(string_of_int y)^
-                                  ": Pattern not matched")))
+                                      ": You can only set a variable"))
+                    else raise (Problem ("Wrong Syntax at line "^
+                                        (string_of_int y)^
+                                  ": Pattern not matched"))))
         | [] -> instr_u acc xs)
     | [] -> acc
   in instr_u [] l;;

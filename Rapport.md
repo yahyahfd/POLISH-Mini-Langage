@@ -16,6 +16,9 @@ J'ai tout de même fait en sorte d'utiliser de nombreuses méthodes auxiliaires 
 Lors de l'évaluation, je me suis permis de définir une variable de type (string,int) liste ref  `env` correspondante à la liste d'association d'environnement. J'ai choisi une référence plutôt qu'autre chose car il faut qu'on stock dedans les nouvelles variables déclarée, ainsi que récupérer la liste des variables déjà présentes lors de l'évaluation d'instructions.
 
 Concernant le résultat de l'évaluation de polish, ça ne marche bien évidemment pas pour des nombres enormes, car je n'ai pas utilisé la bibliothèque ZArith.
+opam install zarith
+sudo apt-get install -y libgmp-dev
+echo $? t.ml check code
 
 ## Compilation et exécution
 Pour compiler le projet, il suffit d'utiliser la commande `make` à la racine du dépot, puis d'utiliser les commandes suivantes afin de l'executer:
