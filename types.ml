@@ -1,5 +1,8 @@
 (** Syntaxe abstraite Polish (types imposés, ne pas changer sauf extensions) *)
 
+(** J'ai créé une nouvelle exception Problem qui prend un string *)
+exception Problem of string;;
+
 (** Position : numéro de ligne dans le fichier, débutant à 1 *)
 type position = int
 
@@ -11,7 +14,7 @@ type op = Add | Sub | Mul | Div | Mod
 
 (** Expressions arithmétiques *)
 type expr =
-  | Num of int
+  | Num of Z.t
   | Var of name
   | Op of op * expr * expr
 

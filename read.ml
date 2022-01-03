@@ -1,8 +1,5 @@
 open Types
 
-(** J'ai créé une nouvelle exception Problem qui prend un string *)
-exception Problem of string;;
-
 (** Cette méthode rajoute l'élément x à la fin de la liste l *)
 let add_last x l =
   let rec add_last_list var l acc = match l with
@@ -92,8 +89,8 @@ let string_to_op x = match x with
 let string_to_expr x = match x with
   | "+" | "-" | "*" | "/" | "%" -> raise (Problem "This is an op")
   | _ ->
-      try Num (int_of_string x)
-      with int_of_string ->
+      try Num (Z.of_string x)
+      with Invalid_argument _ ->
         if x="" then raise (Problem "Empty Var") else Var x;;
 
 (** Cette méthode retire le premier élément d'une liste si c'est possible,

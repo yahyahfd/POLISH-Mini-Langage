@@ -12,7 +12,7 @@ let rec expr_to_value = function
        | Mul -> (Z.mul (expr_to_value e1) (expr_to_value e2))
        | Div -> (Z.div (expr_to_value e1) (expr_to_value e2))
        | Mod -> (Z.rem (expr_to_value e1) (expr_to_value e2)))
-  | Num x -> Z.of_int x
+  | Num x -> x
   | Var x -> (try (List.assoc x !env)
               with Not_found -> failwith (x^" is undefined."));;
 
