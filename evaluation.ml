@@ -7,11 +7,11 @@ let env = ref []
 let rec expr_to_value = function
   | Op (o,e1,e2) ->
       (match o with
-       | Add -> ((expr_to_value e1) + (expr_to_value e2))
-       | Sub -> ((expr_to_value e1) - (expr_to_value e2))
-       | Mul -> ((expr_to_value e1) * (expr_to_value e2))
-       | Div -> ((expr_to_value e1) / (expr_to_value e2))
-       | Mod -> ((expr_to_value e1) mod (expr_to_value e2)))
+       | Add -> (Z.add (expr_to_value e1) (expr_to_value e2))
+       | Sub -> (Z.sub (expr_to_value e1) (expr_to_value e2))
+       | Mul -> (Z.mul (expr_to_value e1) (expr_to_value e2))
+       | Div -> (Z.div (expr_to_value e1) (expr_to_value e2))
+       | Mod -> (Z.rem (expr_to_value e1) (expr_to_value e2)))
   | Num x -> x
   | Var x -> (try (List.assoc x !env)
               with Not_found -> failwith (x^" is undefined."));;
@@ -29,12 +29,12 @@ let add_to_env x i =
 
 (** Cette méthode transforme une condition en sa valeur booléenne *)
 let condition_to_bool (e1,c,e2) = match c with
-  | Eq -> ((expr_to_value e1) = (expr_to_value e2))
-  | Ne -> ((expr_to_value e1) <> (expr_to_value e2))
-  | Lt -> ((expr_to_value e1) < (expr_to_value e2))
-  | Le -> ((expr_to_value e1) <= (expr_to_value e2))
-  | Gt -> ((expr_to_value e1) > (expr_to_value e2))
-  | Ge -> ((expr_to_value e1) >= (expr_to_value e2));;
+  | Eq -> (Z.equal (expr_to_value e1) (expr_to_value e2))
+  | Ne -> not (Z.equal (expr_to_value e1) (expr_to_value e2))
+  | Lt -> (Z.lt (expr_to_value e1) (expr_to_value e2))
+  | Le -> (Z.leq (expr_to_value e1) (expr_to_value e2))
+  | Gt -> (Z.gt (expr_to_value e1) (expr_to_value e2))
+  | Ge -> (Z.geq (expr_to_value e1) (expr_to_value e2));;
 
 let rec evaluate = function
   | [] -> ()
@@ -43,8 +43,8 @@ let rec evaluate = function
           (try
              let tmp = (List.assoc r !env) in
              failwith (r^" already defined and its value is "^
-                       (string_of_int tmp))
-           with Not_found -> (add_to_env r (read_int()));evaluate xs)
+                       (Z.to_string tmp))
+           with Not_found -> (add_to_env r (Z.of_int (read_int())));evaluate xs)
       | Set (n,e) -> (add_to_env n (expr_to_value e));evaluate xs
       | If (a,b,c) ->
           if (condition_to_bool a) then ((evaluate b);evaluate xs)
@@ -52,5 +52,5 @@ let rec evaluate = function
       | While (a,b) ->
           if (condition_to_bool a) then ((evaluate b);evaluate l)
           else evaluate xs
-      | Print e -> print_int (expr_to_value e);print_string "\n";
+      | Print e -> Z.print (expr_to_value e);print_string "\n";
           evaluate xs);;

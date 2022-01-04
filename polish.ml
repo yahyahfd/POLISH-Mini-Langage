@@ -21,14 +21,25 @@ let print_polish (p:program) : unit =
 
 let eval_polish (p:program) : unit = Evaluation.evaluate p;;
 
+let simpl_polish (p:program) : unit = Simplification.simplify p;;
+
+let vars_polish (p:program) : unit = failwith "todo";;
+
+let sign_polish (p:program) : unit = failwith "todo";;
+
 let usage () =
   print_string "Polish : analyse statique d'un mini-langage\n";
-  print_string "usage: à documenter (TODO)\n"
+  print_string ("usage:\n./run -eval <filepath> to evaluate a polish file\n./r"^
+               "un -reprint <filepath> to print a program with a polish syntax"^
+               "\n")
 
 let main () =
   match Sys.argv with
   | [|_;"-reprint";file|] -> print_polish (read_polish file)
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
+  | [|_;"-simpl";file|] -> simpl_polish (read_polish file)
+  | [|_;"-vars";file|] -> failwith "todo"
+  | [|_;"-sign";file|] -> failwith "todo"
   | _ -> usage ()
 
 (* lancement de ce main *)

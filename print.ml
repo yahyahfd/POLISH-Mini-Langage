@@ -13,7 +13,7 @@ let expr_string_list p =
   let rec aux acc = function
     | Op (a,b,c) -> (aux (aux ((op_to_string a)::acc) b) c)
     | Var a -> (a::acc)
-    | Num a -> ((string_of_int a)::acc)
+    | Num a -> ((Z.to_string a)::acc)
   in List.rev (aux [] p);;
 
 (** Cette méthode concatène en deux liste *)
