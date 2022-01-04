@@ -6,15 +6,42 @@ let expr_simpl expr =
     | Op (o,Num e1, Num e2) ->
         (match o with
          | Add ->  Num (Z.add e1 e2)
-         | Sub ->  Num (Z.sub e1 e2)
+         | Sub ->  Num (Z.sub e2 e1)
          | Mul ->  Num (Z.mul e1 e2)
          | Div ->  Num (Z.div e1 e2)
          | Mod ->  Num (Z.rem e1 e2))
+    | Op (o,Num e1, x) ->
+        let res = expr_simpl_aux x in
+        (match (e1, o) with
+         | tmp, Add when (Z.equal tmp Z.zero) -> expr_simpl_aux x
+         | tmp, Sub when (Z.equal tmp Z.zero) ->
+             (match res with
+              | Num n -> Num (Z.neg n)
+              | _ -> Op (o, Num e1, res))
+         | tmp, Mul when (Z.equal tmp Z.zero) -> Num Z.zero
+         | tmp, Div when (Z.equal tmp Z.zero) -> Num Z.zero
+         | tmp, Mod when (Z.equal tmp Z.zero) -> Num Z.zero
+         | tmp, Mul when (Z.equal tmp Z.one) -> expr_simpl_aux x
+         | _ , _ ->
+             (match res with
+              | Num n -> expr_simpl_aux (Op (o, Num e1, res))
+              | _ -> Op (o, Num e1, res)))
+    | Op (o,x, Num e2) ->
+        let res = expr_simpl_aux x in
+        (match e2, o with
+         | tmp, Add when (Z.equal tmp Z.zero) -> expr_simpl_aux x
+         | tmp, Sub when (Z.equal tmp Z.zero) -> expr_simpl_aux x
+         | tmp, Mul when (Z.equal tmp Z.zero) -> Num Z.zero
+         | tmp, Mul when (Z.equal tmp Z.one) -> expr_simpl_aux x
+         | tmp, Div when (Z.equal tmp Z.one) -> expr_simpl_aux x
+         | tmp, Mod when (Z.equal tmp Z.one) -> Num Z.zero
+         | _, _ ->
+             (match res with
+              | Num n -> expr_simpl_aux (Op (o, res, Num e2))
+              | _ -> Op (o, res, Num e2)))
     | Op (o, Var v1, Var v2) as r -> r
     | Op (o, Var v1, x) -> Op (o, Var v1, expr_simpl_aux x)
     | Op (o, x, Var v2) -> Op (o, expr_simpl_aux x, Var v2)
-    | Op (o,Num e1, x) ->Op (o, Num e1, expr_simpl_aux x)
-    | Op (o,x, Num e2) -> Op (o, expr_simpl_aux x, Num e2)
     | Op (o,e1,e2) -> expr_simpl_aux (Op (o,expr_simpl_aux e1, expr_simpl_aux e2))
     | x -> x
   in expr_simpl_aux expr;;
@@ -43,38 +70,44 @@ let cat_list l1 l2 =
 
 (*simplification UNIQUEMENT sur deux entier, si variable dont on attend un read ou autre, ne PAS simplifier*)
 let simplify l =
-  let rec simplify_aux i acc = function
+  let rec fix_line_count acc i = function
     | [] -> List.rev acc
-    | (x,y)::xs ->
-        let xs_simpl =
-          (match xs with
-           | [] -> simplify_aux i acc xs
-           | (line,_)::_ -> simplify_aux (line-x+i) acc xs) in
-        (match y with
-         | Read r -> simplify_aux i (((x-i),y)::acc) xs
-         | Set (n,e) -> simplify_aux i (((x-i),Set(n,expr_simpl e))::acc) xs
-         | If (a,b,c) ->
-             let sub_block = function
-               | [] -> xs_simpl
-               | subs -> simplify_aux (i+1) acc (cat_list subs xs)
-             in let sim_cond = condition_simpl a in
-             (match sim_cond with
-              | (Num e1,_,Num e2) ->
-                  if calculate_condition sim_cond
-                  then sub_block b
-                  else sub_block c
-              | _ -> simplify_aux i (((x-i),If (sim_cond,
-                                            (simplify_aux i [] b),
-                                            (simplify_aux i [] c)))::acc) xs)
-         | While (a,b) ->
-             let sim_cond = condition_simpl a in
-             (match sim_cond with
-              | (Num e1, cond1, Num e2) ->
-                  if calculate_condition sim_cond
-                  then simplify_aux i (((x-i), While (sim_cond,
-                                                  (simplify_aux i [] b)))::acc) xs
-                  else xs_simpl
-              | _ -> simplify_aux i (((x-i),While (sim_cond,
-                                               (simplify_aux i [] b)))::acc) xs)
-         | Print e -> simplify_aux i ((x,Print (expr_simpl e))::acc) xs)
-  in simplify_aux 0 [] l;;
+    | (ind,pos,l')::xs -> fix_line_count ((ind,i,l')::acc) (i+1) xs
+  in let rec simplify_aux i acc = function
+      | [] -> List.rev acc
+      | (x,y)::xs ->
+          let xs_simpl =
+            (match xs with
+             | [] -> simplify_aux i acc xs
+             | (line,_)::_ -> simplify_aux (line-x+i) acc xs) in
+          (match y with
+           | Read r -> simplify_aux i (((x-i),y)::acc) xs
+           | Set (n,e) -> simplify_aux i (((x-i),Set(n,expr_simpl e))::acc) xs
+           | If (a,b,c) ->
+               let sub_block = function
+                 | [] -> xs_simpl
+                 | subs -> simplify_aux (i+1) acc (cat_list subs xs)
+               in let sim_cond = condition_simpl a in
+               (match sim_cond with
+                | (Num e1,_,Num e2) ->
+                    if calculate_condition sim_cond
+                    then sub_block b
+                    else sub_block c
+                | _ -> simplify_aux i (((x-i),If (sim_cond,
+                                                  (simplify_aux i [] b),
+                                                  (simplify_aux i [] c)))::acc) xs)
+           | While (a,b) ->
+               let sim_cond = condition_simpl a in
+               (match sim_cond with
+                | (Num e1, cond1, Num e2) ->
+                    if calculate_condition sim_cond
+                    then simplify_aux i (((x-i), While (sim_cond,
+                                                        (simplify_aux i [] b)))::acc) xs
+                    else xs_simpl
+                | _ -> simplify_aux i (((x-i),While (sim_cond,
+                                                     (simplify_aux i [] b)))::acc) xs)
+           | Print e -> simplify_aux i ((x,Print (expr_simpl e))::acc) xs)
+  in let ipsl_list = fix_line_count [] 1 (Print.block_to_instr_list (simplify_aux 0 [] l))
+  in let s_list = Print.ipsl_list_to_string ipsl_list
+  in let final_string = Print.string_list_to_string s_list
+  in print_string final_string;;
