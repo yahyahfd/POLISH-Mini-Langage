@@ -1,9 +1,9 @@
-open Types
+open Lib.Types
 
 (** L'environnement env de calcul du programme est une référence *)
 let env = ref []
 
-(** Cette méthode permet de calculer une expression (resultat entier) *)
+(** Cette méthode permet de calculer une expression (résultat Z.t) *)
 let rec expr_to_value = function
   | Op (o,e1,e2) ->
       (match o with
@@ -16,9 +16,9 @@ let rec expr_to_value = function
   | Var x -> (try (List.assoc x !env)
               with Not_found -> failwith (x^" is undefined."));;
 
-(** Cette méthode permet d'ajouter x' de valeur i' dans la liste
-    d'association l en modifiant la valeur de x' s'il existe dans l
-    sinon, rajoute un nouveau tuple (x',i') à l *)
+(** Cette méthode permet d'ajouter x de valeur i dans la liste
+    d'association l en modifiant la valeur de x s'il existe dans l
+    sinon, rajoute un nouveau tuple (x,i) à l *)
 let add_to_env x i =
   let rec add_set x i acc = function
     | [] -> List.rev ((x,i)::acc)
@@ -36,6 +36,7 @@ let condition_to_bool (e1,c,e2) = match c with
   | Gt -> (Z.gt (expr_to_value e1) (expr_to_value e2))
   | Ge -> (Z.geq (expr_to_value e1) (expr_to_value e2));;
 
+(** Cette méthode finale fait tourner un program *)
 let rec evaluate = function
   | [] -> ()
   | ((x,y)::xs) as l -> (match y with

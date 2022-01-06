@@ -1,4 +1,4 @@
-open Types
+open Lib.Types
 
 (** Cette méthode transforme un block en (indent,position,string list) list*)
 val block_to_instr_list : block -> (int * position * name list) list
