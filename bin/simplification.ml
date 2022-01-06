@@ -1,4 +1,5 @@
-open Types
+open Lib.Types
+open Lib.Common
 
 (** Cette méthode permet de simplifier une expression (quand c'est possible) *)
 let expr_simpl expr =
@@ -50,6 +51,7 @@ let expr_simpl expr =
 let condition_simpl = function
   | (e1,c,e2) -> expr_simpl e1,c,expr_simpl e2;;
 
+(** Cette méthode calcule une condition quand il n'y a pas d'inconnu *)
 let calculate_condition = function
   | (Num e1,Eq,Num e2) -> (Z.equal e1 e2)
   | (Num e1,Ne,Num e2) -> not (Z.equal e1 e2)
@@ -59,16 +61,7 @@ let calculate_condition = function
   | (Num e1,Ge,Num e2) -> (Z.geq e1 e2)
   | _ -> raise (Problem "You can only calculate a condtion that uses Nums");;
 
-let cat_list l1 l2 =
-  let rec aux acc l = function
-    | [] -> (match l with
-        | [] -> List.rev acc
-        | _ -> aux acc [] l
-      )
-    | x::xs -> aux (x::acc) l xs
-  in aux [] l2 l1;;
-
-(*simplification UNIQUEMENT sur deux entier, si variable dont on attend un read ou autre, ne PAS simplifier*)
+(** Cette méthode finale simplifie un program et le print *)
 let simplify l =
   let rec fix_line_count acc i = function
     | [] -> List.rev acc

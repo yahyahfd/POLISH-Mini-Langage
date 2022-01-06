@@ -1,6 +1,6 @@
-open Types
+open Lib.Types
 
-(** Cette méthode rajoute l'élément x à la fin de la liste l *)
+(** Cette méthode rajoute l'élément x à la fin de la liste l en tailrec *)
 let add_last x l =
   let rec add_last_list var l acc = match l with
     | [] -> List.rev (var::acc)
