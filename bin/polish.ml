@@ -16,7 +16,8 @@ let print_polish (p:program) : unit =
   in print_string final_string;;
 
 (** Prend un program en paramètre et l'évalue en le faisant tourner *)
-let eval_polish (p:program) : unit = Evaluation.evaluate p;;
+let eval_polish (p:program) : unit = 
+  let a = Evaluation.evaluation p in ();;
 
 (** Prend un program en paramètre, le simplifie puis l'affiche *)
 let simpl_polish (p:program) : unit = Simplification.simplify p;;
