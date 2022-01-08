@@ -1,57 +1,54 @@
 open Lib.Types
 
-(** L'environnement env de calcul du programme est une référence *)
-let env = ref []
+(** NameTable représente l'environnement de calcul du programme *)
+module NameTable = Map.Make(String)
 
 (** Cette méthode permet de calculer une expression (résultat Z.t) *)
-let rec expr_to_value = function
-  | Op (o,e1,e2) ->
+let rec expr_to_value env = function
+  | Op (o,e1,e2) -> 
+      let e'1, e'2 = (expr_to_value env e1), (expr_to_value env e2) in
       (match o with
-       | Add -> (Z.add (expr_to_value e1) (expr_to_value e2))
-       | Sub -> (Z.sub (expr_to_value e1) (expr_to_value e2))
-       | Mul -> (Z.mul (expr_to_value e1) (expr_to_value e2))
-       | Div -> (Z.div (expr_to_value e1) (expr_to_value e2))
-       | Mod -> (Z.rem (expr_to_value e1) (expr_to_value e2)))
+       | Add -> (Z.add e'1 e'2)
+       | Sub -> (Z.sub e'1 e'2)
+       | Mul -> (Z.mul e'1 e'2)
+       | Div -> (Z.div e'1 e'2)
+       | Mod -> (Z.rem e'1 e'2))
   | Num x -> x
-  | Var x -> (try (List.assoc x !env)
+  | Var x -> (try (NameTable.find x env)
               with Not_found -> failwith (x^" is undefined."));;
 
-(** Cette méthode permet d'ajouter x de valeur i dans la liste
-    d'association l en modifiant la valeur de x s'il existe dans l
-    sinon, rajoute un nouveau tuple (x,i) à l *)
-let add_to_env x i =
-  let rec add_set x i acc = function
-    | [] -> List.rev ((x,i)::acc)
-    | (y,y')::ys ->
-        if y = x then add_set x i ((y,i)::acc) ys
-        else add_set x i ((y,y')::acc) ys
-  in env := (add_set x i [] !env);;
-
 (** Cette méthode transforme une condition en sa valeur booléenne *)
-let condition_to_bool (e1,c,e2) = match c with
-  | Eq -> (Z.equal (expr_to_value e1) (expr_to_value e2))
-  | Ne -> not (Z.equal (expr_to_value e1) (expr_to_value e2))
-  | Lt -> (Z.lt (expr_to_value e1) (expr_to_value e2))
-  | Le -> (Z.leq (expr_to_value e1) (expr_to_value e2))
-  | Gt -> (Z.gt (expr_to_value e1) (expr_to_value e2))
-  | Ge -> (Z.geq (expr_to_value e1) (expr_to_value e2));;
+let condition_to_bool (e1,c,e2) env = 
+  let e'1, e'2 = (expr_to_value env e1), (expr_to_value env e2) in
 
-(** Cette méthode finale fait tourner un program *)
-let rec evaluate = function
-  | [] -> ()
-  | ((x,y)::xs) as l -> (match y with
-      | Read r -> print_string (r^"?");
-          (try
-             let tmp = (List.assoc r !env) in
-             failwith (r^" already defined and its value is "^
-                       (Z.to_string tmp))
-           with Not_found -> (add_to_env r (Z.of_int (read_int())));evaluate xs)
-      | Set (n,e) -> (add_to_env n (expr_to_value e));evaluate xs
-      | If (a,b,c) ->
-          if (condition_to_bool a) then ((evaluate b);evaluate xs)
-          else ((evaluate c);evaluate xs)
-      | While (a,b) ->
-          if (condition_to_bool a) then ((evaluate b);evaluate l)
-          else evaluate xs
-      | Print e -> Z.print (expr_to_value e);print_string "\n";
-          evaluate xs);;
+  match c with
+  | Eq -> (Z.equal e'1 e'2)
+  | Ne -> not (Z.equal e'1 e'2)
+  | Lt -> (Z.lt e'1 e'2)
+  | Le -> (Z.leq e'1 e'2)
+  | Gt -> (Z.gt e'1 e'2)
+  | Ge -> (Z.geq e'1 e'2);;
+
+(** Cette méthode finale fait tourner un program et renvoie 
+    l'environnement (modifié) à chaque tour de boucle*)
+let evaluation p =
+  let rec evaluate env = function
+    | [] -> env
+    | ((x,y)::xs) as l -> (match y with
+        | Read r -> print_string (r^"?");
+            (try
+               let tmp = (NameTable.find r env) in
+               failwith (r^" already defined and its value is "^
+                         (Z.to_string tmp))
+             with Not_found -> 
+               evaluate (NameTable.add r ((Z.of_int (read_int()))) env) xs)
+        | Set (n,e) -> evaluate (NameTable.add n (expr_to_value env e) env) xs
+        | If (a,b,c) ->
+            if (condition_to_bool a env) then (evaluate (evaluate env b) xs)
+            else (evaluate (evaluate env c) xs)
+        | While (a,b) ->
+            if (condition_to_bool a env) then (evaluate (evaluate env b) l)
+            else evaluate env xs
+        | Print e -> Z.print (expr_to_value env e);print_string "\n";
+            evaluate env xs)
+  in evaluate NameTable.empty p;;
