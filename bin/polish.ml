@@ -24,7 +24,7 @@ let simpl_polish (p:program) : unit = Simplification.simplify p;;
 
 let vars_polish (p:program) : unit = Variable.print_vars p;;
 
-let sign_polish (p:program) : unit = failwith "todo";;
+let sign_polish (p:program) : unit = Signs.print_signs p;;
 
 (** Description du programme Polish *)
 let usage () =
@@ -40,7 +40,7 @@ let main () =
   | [|_;"-eval";file|] -> eval_polish (read_polish file)
   | [|_;"-simpl";file|] -> simpl_polish (read_polish file)
   | [|_;"-vars";file|] -> vars_polish(read_polish file)
-  | [|_;"-sign";file|] -> failwith "todo"
+  | [|_;"-sign";file|] -> sign_polish(read_polish file)
   | _ -> usage ()
 
 (* Lancement de ce main *)

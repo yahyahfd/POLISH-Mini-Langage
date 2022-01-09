@@ -57,12 +57,12 @@ let only_uninitialized_vars (a,b) = b
 
 let all_vars_union (a,b) = Names.union a b
 
-let print_user p = 
+let print_fun p = 
   print_string (p ^ " ");;
 
 let print_vars p =
   let res = all_vars p in
   let u = only_uninitialized_vars (res) in
   let a = all_vars_union (res) in
-  (Names.iter print_user a);print_string("\n");
-  (Names.iter print_user u);print_string("\n");
+  (Names.iter print_fun a);print_string("\n");
+  (Names.iter print_fun u);print_string("\n");
