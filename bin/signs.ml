@@ -320,7 +320,7 @@ let all_signs p =
              let res_a = condition a env in
              let (res_b,li) = 
                let l_i =
-                 (if (contains_error cmp2 = true || contains_error cmp2' = true)
+                 (if (contains_error e1' = true || contains_error e2' = true)
                   then 
                     if line = -1 then 
                       x
@@ -333,7 +333,7 @@ let all_signs p =
                 | _, _ -> get_signs (env,l_i) c) in
              (let (res_c,li) =            
                 let l_i =
-                  (if (contains_error cmp1 = true || contains_error cmp1' = true)
+                  (if (contains_error e1' = true || contains_error e2' = true)
                    then 
                      if line = -1 then 
                        x
@@ -362,7 +362,7 @@ let all_signs p =
              let (cmp2,cmp2') = compare_final e1' e2' (reverse_op c') in
              let (res_b,li) = 
                let l_i =
-                 (if (contains_error cmp1 = true || contains_error cmp1' = true)
+                 (if (contains_error e1' = true || contains_error e2' = true)
                   then 
                     if line = -1 then 
                       x
@@ -381,7 +381,7 @@ let all_signs p =
                 | _, _ -> env) in
              let new_env = union_table res_b env in
              let l_i =
-               (if (contains_error cmp2 = true || contains_error cmp2' = true)
+               (if (contains_error e1' = true || contains_error e2' = true)
                 then 
                   if line = -1 then 
                     x
