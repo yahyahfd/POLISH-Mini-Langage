@@ -390,70 +390,73 @@ let all_signs p =
              let (cmp1,cmp1') = compare_final e1' e2' c' in
              let (cmp2,cmp2') = compare_final e1' e2' (reverse_op c') in
              let res_a = condition a env in
-             let (res_b,li) =
-               let l_i =
-                 (if (contains_error e1' = true || contains_error e2' = true)
-                  then
-                    if line = -1 then
-                      x
-                    else line
-                  else line) in
+             let (res_c',li) =
                (match e1,e2 with
                 | Var x_i, Var y_i ->
                     get_signs
                       ((SignTable.add y_i cmp2'
-                          (SignTable.add x_i cmp2 env)),l_i) c
-                | Var x_i, _ -> get_signs ((SignTable.add x_i cmp2 env),l_i) c
-                | _, Var y_i -> get_signs ((SignTable.add y_i cmp2' env),l_i) c
-                | _, _ -> get_signs (env,l_i) c) in
-             (let (res_c,li) =
-                let l_i =
-                  (if (contains_error e1' = true || contains_error e2' = true)
-                   then
-                     if line = -1 then
-                       x
-                     else line
-                   else line) in
+                          (SignTable.add x_i cmp2 env)),line) c
+                | Var x_i, _ -> get_signs ((SignTable.add x_i cmp2 env),line) c
+                | _, Var y_i -> get_signs ((SignTable.add y_i cmp2' env),line) c
+                | _, _ -> get_signs (env,line) c) in 
+             let l_i =
+               (if (contains_error e1' = true || contains_error e2' = true)
+                then
+                  if li = -1 then
+                    x
+                  else li
+                else li) in
+             let (res_c,line') = (res_c',l_i) in
+             (let (res_b',li) = 
                 (match e1,e2 with
                  | Var x_i, Var y_i ->
                      get_signs
                        ((SignTable.add y_i cmp1'
-                           (SignTable.add x_i cmp1 env)),l_i) b
-                 | Var x_i, _ -> get_signs ((SignTable.add x_i cmp1 env),l_i) b
-                 | _, Var y_i -> get_signs ((SignTable.add y_i cmp1' env),l_i) b
-                 | _, _ -> get_signs (env,l_i) b) in
+                           (SignTable.add x_i cmp1 env)),line') b
+                 | Var x_i, _ -> get_signs ((SignTable.add x_i cmp1 env),line') b
+                 | _, Var y_i -> get_signs ((SignTable.add y_i cmp1' env),line') b
+                 | _, _ -> get_signs (env,line') b) in
+              let l_i =
+                (if (contains_error e1' = true || contains_error e2' = true)
+                 then
+                   if li = -1 then
+                     x
+                   else li 
+                 else li) in
+              let (res_b, line') = (res_b', l_i) in
               if (is_true res_a = true)
               then
                 if (is_false res_a = true)
                 then
-                  get_signs ((union_table res_b res_c),li) xs
+                  get_signs ((union_table res_b res_c),line') xs
                 else
-                  get_signs (res_b,li) xs
+                  get_signs (res_b,line') xs
               else
                 (if (is_false res_a = true)
-                 then get_signs (res_c,li) xs
-                 else (env,li))))
+                 then get_signs (res_c,line') xs
+                 else (env,line'))))
         | While ((e1,c',e2),b) ->
             (let e1' = expr_to_sign_list env e1 in
              let e2' = expr_to_sign_list env e2 in
              let (cmp1,cmp1') = compare_final e1' e2' c' in
              let (cmp2,cmp2') = compare_final e1' e2' (reverse_op c') in
-             let (res_b,li) =
-               let l_i =
-                 (if (contains_error e1' = true || contains_error e2' = true)
-                  then
-                    if line = -1 then
-                      x
-                    else line
-                  else line) in
+             let (res_b',li) =
                (match e1,e2 with
                 | Var x_i, Var y_i ->
                     get_signs
                       ((SignTable.add y_i cmp1'
-                          (SignTable.add x_i cmp1 env)),l_i) b
-                | Var x_i, _ -> get_signs ((SignTable.add x_i cmp1 env),l_i) b
-                | _, Var y_i -> get_signs ((SignTable.add y_i cmp1' env),l_i) b
-                | _, _ -> get_signs (env,l_i) b) in
+                          (SignTable.add x_i cmp1 env)),line) b
+                | Var x_i, _ -> get_signs ((SignTable.add x_i cmp1 env),line) b
+                | _, Var y_i -> get_signs ((SignTable.add y_i cmp1' env),line) b
+                | _, _ -> get_signs (env,line) b) in
+             let l_i =
+               (if (contains_error e1' = true || contains_error e2' = true)
+                then
+                  if li = -1 then
+                    x
+                  else li
+                else li) in
+             let (res_b,line') = (res_b',l_i) in
              let res_c =
                (match e1,e2 with
                 | Var x_i, Var y_i -> (SignTable.add y_i cmp2'
@@ -462,18 +465,11 @@ let all_signs p =
                 | _, Var y_i -> (SignTable.add y_i cmp2' env)
                 | _, _ -> env) in
              let new_env = union_table res_b env in
-             let l_i =
-               (if (contains_error e1' = true || contains_error e2' = true)
-                then
-                  if line = -1 then
-                    x
-                  else line
-                else line) in
              if (SignTable.equal
                    (fun x y -> (unique x) = (unique y))
                    new_env env)
-             then get_signs ((union_table res_c env),l_i) xs
-             else get_signs (new_env,l_i) prog)
+             then get_signs ((union_table res_c env),line') xs
+             else get_signs (new_env,line') prog)
         | Print e -> (env,line))
   in get_signs (SignTable.empty,(-1)) p;;
 
@@ -490,7 +486,7 @@ let rec list_to_string acc = function
     une variable par ligne, suivie d'un espace et enfin de tous ses signes
     possibles *)
 let print_fun p l =
-  print_string (p ^ " "^(list_to_string "" l));print_string("\n");;
+  print_string (p ^ " "^(list_to_string "" (unique l)));print_string("\n");;
 
 (** Cette méthode permet de formater l'environnement final afin d'afficher
     une variable par ligne, suivie d'un espace et enfin de tous ses signes
