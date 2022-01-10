@@ -76,7 +76,7 @@ let operation y o l = match o with
 let all_combinaison l1 l2 o =
   let rec aux_combi acc l2' o = function
     | [] -> List.rev acc
-    | x::xs -> aux_combi ((operation x o l2')@acc) l2' o xs
+    | x::xs -> aux_combi (Lib.Common.cat_list (operation x o l2') acc) l2' o xs
   in aux_combi [] l2 o l1
 
 (** Cette méthode est utilisée afin de transformer une expression
@@ -211,7 +211,7 @@ let unique l =
 let all_comb_bool l1 l2 o =
   let rec aux_comb acc l2' o = function
     | [] -> List.rev acc
-    | x::xs -> aux_comb ((comparaison x o l2')@acc) l2' o xs
+    | x::xs -> aux_comb (Lib.Common.cat_list (comparaison x o l2') acc) l2' o xs
   in aux_comb [] l2 o l1
 
 (** Cette méthode transforme une condition en une new_bool list *)
