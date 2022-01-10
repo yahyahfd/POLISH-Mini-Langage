@@ -1,4 +1,5 @@
 open Lib.Types
+open Lib.Common
 
 (** Type sign qui associé à chaque variable du programme *)
 type sign = Neg | Zero | Pos | Error
@@ -76,7 +77,7 @@ let operation y o l = match o with
 let all_combinaison l1 l2 o =
   let rec aux_combi acc l2' o = function
     | [] -> List.rev acc
-    | x::xs -> aux_combi (Lib.Common.cat_list (operation x o l2') acc) l2' o xs
+    | x::xs -> aux_combi (cat_list (operation x o l2') acc) l2' o xs
   in aux_combi [] l2 o l1
 
 (** Cette méthode est utilisée afin de transformer une expression
@@ -197,7 +198,7 @@ let sort l = List.sort default_sort l
 (** Cette méthode permet d'obtenir une liste triée sans doublons *)
 let unique l =
   let rec sort_and_unique acc = function
-    | [] -> List.rev acc
+    | [] -> acc
     | x::xs ->
         if (List.length acc = 0)
         then sort_and_unique (x::acc) xs
@@ -211,7 +212,7 @@ let unique l =
 let all_comb_bool l1 l2 o =
   let rec aux_comb acc l2' o = function
     | [] -> List.rev acc
-    | x::xs -> aux_comb (Lib.Common.cat_list (comparaison x o l2') acc) l2' o xs
+    | x::xs -> aux_comb (cat_list (comparaison x o l2') acc) l2' o xs
   in aux_comb [] l2 o l1
 
 (** Cette méthode transforme une condition en une new_bool list *)

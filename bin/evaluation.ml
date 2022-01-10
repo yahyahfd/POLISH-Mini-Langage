@@ -5,7 +5,7 @@ module NameTable = Map.Make(String)
 
 (** Cette méthode permet de calculer une expression (résultat Z.t) *)
 let rec expr_to_value env = function
-  | Op (o,e1,e2) -> 
+  | Op (o,e1,e2) ->
       let e'1, e'2 = (expr_to_value env e1), (expr_to_value env e2) in
       (match o with
        | Add -> (Z.add e'1 e'2)
@@ -18,7 +18,7 @@ let rec expr_to_value env = function
               with Not_found -> failwith (x^" is undefined."));;
 
 (** Cette méthode transforme une condition en sa valeur booléenne *)
-let condition_to_bool (e1,c,e2) env = 
+let condition_to_bool (e1,c,e2) env =
   let e'1, e'2 = (expr_to_value env e1), (expr_to_value env e2) in
 
   match c with
@@ -29,7 +29,7 @@ let condition_to_bool (e1,c,e2) env =
   | Gt -> (Z.gt e'1 e'2)
   | Ge -> (Z.geq e'1 e'2);;
 
-(** Cette méthode finale fait tourner un program et renvoie 
+(** Cette méthode finale fait tourner un program et renvoie
     l'environnement (modifié) à chaque tour de boucle*)
 let evaluation p =
   let rec evaluate env = function
@@ -40,7 +40,7 @@ let evaluation p =
                let tmp = (NameTable.find r env) in
                failwith (r^" already defined and its value is "^
                          (Z.to_string tmp))
-             with Not_found -> 
+             with Not_found ->
                evaluate (NameTable.add r ((Z.of_int (read_int()))) env) xs)
         | Set (n,e) -> evaluate (NameTable.add n (expr_to_value env e) env) xs
         | If (a,b,c) ->
