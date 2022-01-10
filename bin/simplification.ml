@@ -43,7 +43,8 @@ let expr_simpl expr =
     | Op (o, Var v1, Var v2) as r -> r
     | Op (o, Var v1, x) -> Op (o, Var v1, expr_simpl_aux x)
     | Op (o, x, Var v2) -> Op (o, expr_simpl_aux x, Var v2)
-    | Op (o,e1,e2) -> expr_simpl_aux (Op (o,expr_simpl_aux e1, expr_simpl_aux e2))
+    | Op (o,e1,e2) -> expr_simpl_aux
+                        (Op (o,expr_simpl_aux e1, expr_simpl_aux e2))
     | x -> x
   in expr_simpl_aux expr;;
 
@@ -86,21 +87,26 @@ let simplify l =
                     if calculate_condition sim_cond
                     then sub_block b
                     else sub_block c
-                | _ -> simplify_aux i (((x-i),If (sim_cond,
-                                                  (simplify_aux i [] b),
-                                                  (simplify_aux i [] c)))::acc) xs)
+                | _ -> simplify_aux i
+                         (((x-i),If (sim_cond,
+                                     (simplify_aux i [] b),
+                                     (simplify_aux i [] c)))::acc) xs)
            | While (a,b) ->
                let sim_cond = condition_simpl a in
                (match sim_cond with
                 | (Num e1, cond1, Num e2) ->
                     if calculate_condition sim_cond
-                    then simplify_aux i (((x-i), While (sim_cond,
-                                                        (simplify_aux i [] b)))::acc) xs
+                    then simplify_aux i
+                        (((x-i),
+                          While (sim_cond,
+                                 (simplify_aux i [] b)))::acc) xs
                     else xs_simpl
-                | _ -> simplify_aux i (((x-i),While (sim_cond,
-                                                     (simplify_aux i [] b)))::acc) xs)
+                | _ -> simplify_aux i
+                         (((x-i),While (sim_cond,
+                                        (simplify_aux i [] b)))::acc) xs)
            | Print e -> simplify_aux i ((x,Print (expr_simpl e))::acc) xs)
-  in let ipsl_list = fix_line_count [] 1 (Print.block_to_instr_list (simplify_aux 0 [] l))
+  in let ipsl_list = fix_line_count [] 1
+         (Print.block_to_instr_list (simplify_aux 0 [] l))
   in let s_list = Print.ipsl_list_to_string ipsl_list
   in let final_string = Print.string_list_to_string s_list
   in print_string final_string;;
