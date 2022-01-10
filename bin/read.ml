@@ -1,9 +1,6 @@
-open Types
+open Lib.Types
 
-(** J'ai créé une nouvelle exception Problem qui prend un string *)
-exception Problem of string;;
-
-(** Cette méthode rajoute l'élément x à la fin de la liste l *)
+(** Cette méthode rajoute l'élément x à la fin de la liste l en tailrec *)
 let add_last x l =
   let rec add_last_list var l acc = match l with
     | [] -> List.rev (var::acc)
@@ -50,7 +47,7 @@ let remove_comments l =
           else rm_com (((x-i),y)::acc) i xs
   in rm_com [] 0 l;;
 
-(** Cette méthode transforme une liste de (postion,string) list en
+(** Cette méthode transforme une liste de (position,string) list en
     (position,string list) list*)
 let int_string_list_list l =
   let rec isl_list acc = function
@@ -66,16 +63,25 @@ let indent_final_list l =
     | (c,x)::xs ->
         let indent = indent_string_l x in
         let no_space_list = no_space_l x in
-        if (indent mod 2 = 0) then
-          (if c=1 then
-             if indent = 0 then pos_ind_string_list_list
-                 ((indent,c,no_space_list)::acc) xs
-             else raise (Problem ("The first line of the program has to be "^
-                         "of indent 0"))
-           else pos_ind_string_list_list ((indent,c,no_space_list)::acc) xs)
-        else raise (Problem ("Wrong Indentation at Line "^(string_of_int c)^
-                             ": Indent has to be an even number"))
+        (match no_space_list with
+         | [] -> raise
+                   (Problem ("Empty Line that is not end of file at Line"^
+                             (string_of_int c)^
+                             ": You can't leave empty lines in a polish file"))
+         | _ ->
+             if (indent mod 2 = 0) then
+               (if c=1 then
+                  if indent = 0 then pos_ind_string_list_list
+                      ((indent,c,no_space_list)::acc) xs
+                  else raise (Problem ("The first line of the program has to be"
+                                       ^" of indent 0"))
+                else pos_ind_string_list_list
+                    ((indent,c,no_space_list)::acc) xs)
+             else raise (Problem ("Wrong Indentation at Line "^(string_of_int c)
+                                  ^": Indent has to be an even number")))
   in pos_ind_string_list_list [] (remove_comments (int_string_list_list l));;
+
+
 
 (** Cette méthode permet de transformer un opérateur en son type op
     correspondant sinon renvoie une exception *)
@@ -92,8 +98,8 @@ let string_to_op x = match x with
 let string_to_expr x = match x with
   | "+" | "-" | "*" | "/" | "%" -> raise (Problem "This is an op")
   | _ ->
-      try Num (int_of_string x)
-      with int_of_string ->
+      try Num (Z.of_string x)
+      with Invalid_argument _ ->
         if x="" then raise (Problem "Empty Var") else Var x;;
 
 (** Cette méthode retire le premier élément d'une liste si c'est possible,

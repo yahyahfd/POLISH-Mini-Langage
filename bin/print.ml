@@ -1,4 +1,5 @@
-open Types
+open Lib.Types
+open Lib.Common
 
 (** Cette méthode permet de transformer un op en son string correspondant*)
 let op_to_string = function
@@ -13,18 +14,8 @@ let expr_string_list p =
   let rec aux acc = function
     | Op (a,b,c) -> (aux (aux ((op_to_string a)::acc) b) c)
     | Var a -> (a::acc)
-    | Num a -> ((string_of_int a)::acc)
+    | Num a -> ((Z.to_string a)::acc)
   in List.rev (aux [] p);;
-
-(** Cette méthode concatène en deux liste *)
-let cat_list l1 l2 =
-  let rec aux acc l = function
-    | [] -> (match l with
-        | [] -> List.rev acc
-        | _ -> aux acc [] l
-      )
-    | x::xs -> aux (x::acc) l xs
-  in aux [] l2 l1;;
 
 (** Cette méthode permet de transformer un comp en string *)
 let comp_to_string = function
