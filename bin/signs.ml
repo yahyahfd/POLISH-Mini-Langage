@@ -398,7 +398,7 @@ let all_signs p =
                           (SignTable.add x_i cmp2 env)),line) c
                 | Var x_i, _ -> get_signs ((SignTable.add x_i cmp2 env),line) c
                 | _, Var y_i -> get_signs ((SignTable.add y_i cmp2' env),line) c
-                | _, _ -> get_signs (env,line) c) in 
+                | _, _ -> get_signs (env,line) c) in
              let l_i =
                (if (contains_error e1' = true || contains_error e2' = true)
                 then
@@ -407,21 +407,23 @@ let all_signs p =
                   else li
                 else li) in
              let (res_c,line') = (res_c',l_i) in
-             (let (res_b',li) = 
+             (let (res_b',li) =
                 (match e1,e2 with
                  | Var x_i, Var y_i ->
                      get_signs
                        ((SignTable.add y_i cmp1'
                            (SignTable.add x_i cmp1 env)),line') b
-                 | Var x_i, _ -> get_signs ((SignTable.add x_i cmp1 env),line') b
-                 | _, Var y_i -> get_signs ((SignTable.add y_i cmp1' env),line') b
+                 | Var x_i, _ -> get_signs
+                                   ((SignTable.add x_i cmp1 env),line') b
+                 | _, Var y_i -> get_signs
+                                   ((SignTable.add y_i cmp1' env),line') b
                  | _, _ -> get_signs (env,line') b) in
               let l_i =
                 (if (contains_error e1' = true || contains_error e2' = true)
                  then
                    if li = -1 then
                      x
-                   else li 
+                   else li
                  else li) in
               let (res_b, line') = (res_b', l_i) in
               if (is_true res_a = true)
