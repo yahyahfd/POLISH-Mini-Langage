@@ -22,8 +22,15 @@ let eval_polish (p:program) : unit =
 (** Prend un program en paramètre, le simplifie puis l'affiche *)
 let simpl_polish (p:program) : unit = Simplification.simplify p;;
 
+(** Prend un program en paramètre puis affiche toutes ses variables ainsi 
+    que ses variables accédées avant leurs premières inititialisations *)
 let vars_polish (p:program) : unit = Variable.print_vars p;;
 
+(** Prend un program en paramètre, puis affiche toutes ses variables 
+  ainsi que leurs signes possibles en fin d'execution 
+  (une variable par ligne suivie d'un espace puis de ses signes) 
+  Affiche sur une dernière ligne la ligne correspondant à la 
+  première erreur liée à une division par zéro, sinon affiche safe en cas d'absence d'erreur *)
 let sign_polish (p:program) : unit = Signs.print_signs p;;
 
 (** Description du programme Polish *)
