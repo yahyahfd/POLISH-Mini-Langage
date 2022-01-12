@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** Cette méthode rajoute l'élément x à la fin de la liste l en tailrec *)
 let add_last x l =

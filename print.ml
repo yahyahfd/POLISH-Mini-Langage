@@ -1,5 +1,5 @@
-open Lib.Types
-open Lib.Common
+open Types
+open Common
 
 (** Cette méthode permet de transformer un op en son string correspondant*)
 let op_to_string = function

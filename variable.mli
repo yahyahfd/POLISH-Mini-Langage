@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** Cette méthode finale est celle utilisée afin d'afficher toutes
     les variables du programme sur une ligne, puis les variables

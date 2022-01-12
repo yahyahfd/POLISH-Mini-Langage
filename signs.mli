@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** Cette méthode permet de formater l'environnement final afin d'afficher
     une variable par ligne, suivie d'un espace et enfin de tous ses signes

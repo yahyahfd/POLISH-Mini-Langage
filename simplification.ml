@@ -1,5 +1,5 @@
-open Lib.Types
-open Lib.Common
+open Types
+open Common
 
 (** Cette méthode permet de simplifier une expression (quand c'est possible) *)
 let expr_simpl expr =

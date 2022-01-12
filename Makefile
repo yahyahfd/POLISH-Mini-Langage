@@ -1,8 +1,8 @@
 binary:
-	dune build bin/polish.exe
+	dune build polish.exe
 
 byte:
-	dune build bin/polish.bc
+	dune build polish.bc
 
 clean:
 	dune clean

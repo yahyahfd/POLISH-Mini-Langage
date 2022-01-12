@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** Projet Polish -- Analyse statique d'un mini-langage impératif *)
 

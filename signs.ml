@@ -1,5 +1,5 @@
-open Lib.Types
-open Lib.Common
+open Types
+open Common
 
 (** Type sign qui associé à chaque variable du programme *)
 type sign = Neg | Zero | Pos | Error

@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** module Names utilisé afin de gérer les variables du programme*)
 module Names = Set.Make(String)

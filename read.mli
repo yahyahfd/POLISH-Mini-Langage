@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** Cette méthode permet d'ouvrir un fichier et nous renvoie une liste de
     (position,String) correspondant à une ligne de chaque ligne du fichier *)

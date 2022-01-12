@@ -1,4 +1,4 @@
-open Lib.Types
+open Types
 
 (** NameTable représente l'environnement de calcul du programme *)
 module NameTable :
