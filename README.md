@@ -1,4 +1,4 @@
-Projet PF5 2021 : Polish
+POLISH: Mini-Language mathématique
 ========================
 
 ## Sujet de projet
