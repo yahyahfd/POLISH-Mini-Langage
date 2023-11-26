@@ -19,6 +19,8 @@ Voir [INSTALL.md](https://gaufre.informatique.univ-paris-diderot.fr/letouzey/pf5
 
   - ocaml évidemment
   - dune et make
+  - opam install zarith
+Voir INSTALL.md pour les prérequis.
 
 ## Compilation et lancement
 
